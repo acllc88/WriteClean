@@ -1,21 +1,32 @@
 // api/grammar.js
-// Vercel Serverless Function — CommonJS format (required for .js files)
-// API key lives in Vercel Environment Variables → never in browser
+// Vercel Serverless Function — Groq API (free, ultra-fast)
+// API key in Vercel Environment Variables → never exposed to browser
 
 const SYSTEM_PROMPTS = {
   grammar: (voiceMode) => voiceMode
-    ? `You are an expert grammar checker. PRESERVE the writer's unique voice — only fix actual grammar, spelling, and punctuation errors. Do NOT rewrite sentences or change word choices unless outright wrong. Return ONLY a raw JSON object (no markdown, no backticks, no explanation): {"corrected":"the corrected text with errors wrapped like this: <span class=\\"err\\">wrong word</span><span class=\\"fix\\">correct word</span> and all other text kept exactly as-is","errors":2,"warnings":1,"improvements":3}`
-    : `You are an expert grammar checker. Fix all grammar, spelling, punctuation, and style errors. Return ONLY a raw JSON object (no markdown, no backticks): {"corrected":"the corrected text with errors wrapped like this: <span class=\\"err\\">wrong word</span><span class=\\"fix\\">correct word</span>","errors":2,"warnings":1,"improvements":3}`,
+    ? `You are an expert grammar checker. PRESERVE the writer's unique voice and style. Only fix actual grammar, spelling, and punctuation errors. Do NOT rewrite or rephrase unless something is outright wrong.
+
+Return ONLY a valid raw JSON object — no markdown, no backticks, no explanation before or after:
+{"corrected":"full text here with errors marked like: <span class=\\"err\\">wrong</span><span class=\\"fix\\">correct</span> and all other text untouched","errors":2,"warnings":1,"improvements":3}`
+    : `You are an expert grammar checker. Fix all grammar, spelling, punctuation, and clarity errors.
+
+Return ONLY a valid raw JSON object — no markdown, no backticks, no explanation:
+{"corrected":"full text here with errors marked like: <span class=\\"err\\">wrong</span><span class=\\"fix\\">correct</span>","errors":2,"warnings":1,"improvements":3}`,
 
   style: () =>
-    `You are a style and clarity editor. Improve readability, flow, and conciseness while keeping the writer's voice. Return ONLY a raw JSON object (no markdown, no backticks): {"corrected":"improved text with changes wrapped in <span class=\\"fix\\">improved phrase</span>","errors":0,"warnings":2,"improvements":4}`,
+    `You are a style and clarity editor. Improve readability, sentence flow, and conciseness while keeping the writer's voice.
+
+Return ONLY a valid raw JSON object — no markdown, no backticks:
+{"corrected":"full improved text with style changes in <span class=\\"fix\\">improved phrase</span>","errors":0,"warnings":2,"improvements":4}`,
 
   humanize: () =>
-    `You are an expert at making AI-generated text sound naturally human. Vary sentence lengths dramatically, add personality and first-person perspective, remove corporate jargon, use informal transitions. Return ONLY a raw JSON object (no markdown, no backticks): {"corrected":"humanized text with key changes in <span class=\\"fix\\">natural phrase</span>","errors":0,"warnings":0,"improvements":5}`
+    `You are an expert at making AI-generated text sound naturally human. Vary sentence lengths, add personality, use casual transitions like "But here's the thing" or "So why does this matter?", remove robotic corporate tone.
+
+Return ONLY a valid raw JSON object — no markdown, no backticks:
+{"corrected":"full humanized text with key changes in <span class=\\"fix\\">natural phrase</span>","errors":0,"warnings":0,"improvements":5}`
 };
 
 module.exports = async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -23,13 +34,11 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Verify API key is configured
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    console.error('MISSING: OPENROUTER_API_KEY environment variable not set in Vercel');
+    console.error('MISSING: GROQ_API_KEY not set in Vercel Environment Variables');
     return res.status(500).json({
-      error: 'API key not configured',
-      fix: 'Go to Vercel Dashboard → Settings → Environment Variables → add OPENROUTER_API_KEY'
+      error: 'API key not configured — add GROQ_API_KEY in Vercel Dashboard → Settings → Environment Variables'
     });
   }
 
@@ -39,24 +48,23 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'No text provided' });
   }
 
-  const safeText = text.slice(0, 10000);
+  const safeText = text.slice(0, 8000);
   const systemPrompt = (SYSTEM_PROMPTS[mode] || SYSTEM_PROMPTS.grammar)(voiceMode);
 
   try {
-    console.log(`[grammar] mode=${mode} voiceMode=${voiceMode} length=${safeText.length}`);
+    console.log(`[grammar] mode=${mode} voiceMode=${voiceMode} chars=${safeText.length}`);
 
-    const apiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const apiResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://writeclean.vercel.app',
-        'X-Title': 'WriteClean Grammar Checker'
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'openai/gpt-4o-mini',
-        max_tokens: 2000,
-        temperature: 0.2,
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 2048,
+        temperature: 0.1,
+        response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: safeText }
@@ -66,25 +74,29 @@ module.exports = async function handler(req, res) {
 
     if (!apiResponse.ok) {
       const errBody = await apiResponse.text();
-      console.error(`OpenRouter error ${apiResponse.status}:`, errBody);
+      console.error(`Groq error ${apiResponse.status}:`, errBody);
       return res.status(502).json({
-        error: `AI service error (${apiResponse.status})`,
+        error: `Groq API error (${apiResponse.status})`,
         detail: errBody
       });
     }
 
     const data = await apiResponse.json();
-
     let raw = data.choices?.[0]?.message?.content || '';
-    // Strip any markdown fences the model may have added
-    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+
+    // Strip any accidental markdown fences
+    raw = raw
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```\s*$/i, '')
+      .trim();
 
     let result;
     try {
       result = JSON.parse(raw);
     } catch (e) {
-      console.warn('JSON parse failed, using raw text as corrected output');
-      result = { corrected: raw || safeText, errors: 0, warnings: 0, improvements: 0 };
+      console.warn('JSON parse failed:', e.message, '| raw:', raw.slice(0, 200));
+      result = { corrected: safeText, errors: 0, warnings: 0, improvements: 0 };
     }
 
     return res.status(200).json(result);
