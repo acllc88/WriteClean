@@ -63,19 +63,26 @@ async function runCheck() {
   };
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer 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',
+        'HTTP-Referer': 'https://writeclean.ai',
+        'X-Title': 'WriteClean Grammar Checker'
+      },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'anthropic/claude-sonnet-4-5',
         max_tokens: 1500,
-        system: systemPrompts[currentMode],
-        messages: [{ role: 'user', content: `Process this text:\n\n${text}` }]
+        messages: [
+          { role: 'system', content: systemPrompts[currentMode] },
+          { role: 'user', content: `Process this text:\n\n${text}` }
+        ]
       })
     });
 
     const data = await response.json();
-    const raw = (data.content?.[0]?.text || '{}').replace(/```json|```/g, '').trim();
+    const raw = (data.choices?.[0]?.message?.content || data.content?.[0]?.text || '{}').replace(/```json|```/g, '').trim();
     const result = JSON.parse(raw);
 
     document.getElementById('output-text').innerHTML = result.corrected || text;
