@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════
    WRITECLEAN — main.js
-   Grammar tool logic + UI interactions
+   Calls /api/grammar (Vercel Serverless Function)
+   API key lives in Vercel env vars — never in browser
 ═══════════════════════════════════════ */
 
 let voiceMode = true;
@@ -9,14 +10,17 @@ let currentMode = 'grammar';
 // ── Tab switching ──
 document.querySelectorAll('.tool-tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.tool-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.tool-tab').forEach(t => {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+    });
     tab.classList.add('active');
-    tab.setAttribute('aria-selected','true');
+    tab.setAttribute('aria-selected', 'true');
     currentMode = tab.dataset.mode;
     const placeholders = {
-      grammar: "Paste your text here — no account needed. Your text is never stored or shared.",
-      style:   "Paste your text for style and clarity improvements — free, no login required.",
-      humanize:"Paste AI-generated text here to humanize it — remove the robotic tone, free and unlimited."
+      grammar:  'Paste your text here — grammar & spelling check. Free, no account needed.',
+      style:    'Paste your text for style and clarity improvements — free, no login required.',
+      humanize: 'Paste AI-generated text here to make it sound human — free and unlimited.'
     };
     document.getElementById('input-area').placeholder = placeholders[currentMode];
     document.getElementById('output-section').style.display = 'none';
@@ -25,8 +29,11 @@ document.querySelectorAll('.tool-tab').forEach(tab => {
 
 // ── Word count ──
 document.getElementById('input-area').addEventListener('input', function () {
-  const words = this.value.trim() === '' ? 0 : this.value.trim().split(/\s+/).filter(Boolean).length;
-  document.getElementById('word-count').textContent = words + ' word' + (words !== 1 ? 's' : '');
+  const words = this.value.trim() === ''
+    ? 0
+    : this.value.trim().split(/\s+/).filter(Boolean).length;
+  document.getElementById('word-count').textContent =
+    words + ' word' + (words !== 1 ? 's' : '');
 });
 
 // ── Voice mode toggle ──
@@ -40,10 +47,13 @@ function toggleVoice() {
   lbl.className = voiceMode ? 'mode-on' : 'mode-off';
 }
 
-// ── Grammar check ──
+// ── Main grammar check ──
 async function runCheck() {
   const text = document.getElementById('input-area').value.trim();
-  if (!text) { alert('Please paste some text to check.'); return; }
+  if (!text) {
+    alert('Please paste some text to check.');
+    return;
+  }
 
   const btn = document.getElementById('check-btn');
   btn.disabled = true;
@@ -51,52 +61,54 @@ async function runCheck() {
   document.getElementById('loading').style.display = 'block';
   document.getElementById('output-section').style.display = 'none';
 
-  const systemPrompts = {
-    grammar: `You are an expert grammar checker. ${voiceMode
-      ? 'PRESERVE the writer\'s unique voice and style — only fix actual grammatical, spelling, and punctuation errors. Do NOT change word choices unless they are outright wrong.'
-      : 'Fix all grammar, spelling, punctuation, and style errors comprehensively.'
-    } Return ONLY valid JSON (no markdown fences): {"corrected":"<corrected HTML — wrap removed errors in <span class=\\"err\\">strikethrough text</span> and their fixes in <span class=\\"fix\\">fixed text</span>. Keep all other text exactly as-is.>","errors":<integer count of grammar/spelling errors>,"warnings":<integer count of style issues>,"improvements":<integer total>}`,
-
-    style: `You are a style and clarity editor. Improve clarity, conciseness, and readability while keeping the writer's voice. Return ONLY valid JSON: {"corrected":"<improved HTML with <span class=\\"fix\\">style improvements</span> highlighted>","errors":0,"warnings":<integer>,"improvements":<integer>}`,
-
-    humanize: `You are an expert text humanizer. Transform AI-generated text to sound naturally human: vary sentence lengths dramatically, add first-person perspective, use informal transitions like 'But here's the thing' or 'So why does this matter?', remove corporate jargon, add specificity. Return ONLY valid JSON: {"corrected":"<humanized HTML with <span class=\\"fix\\">key humanized changes</span> highlighted>","errors":0,"warnings":0,"improvements":<integer>}`
-  };
-
   try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    // Call our secure Netlify Edge proxy — no API key exposed in browser
+    const response = await fetch('/api/grammar', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer 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',
-        'HTTP-Referer': 'https://writeclean.ai',
-        'X-Title': 'WriteClean Grammar Checker'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4-5',
-        max_tokens: 1500,
-        messages: [
-          { role: 'system', content: systemPrompts[currentMode] },
-          { role: 'user', content: `Process this text:\n\n${text}` }
-        ]
+        text: text,
+        mode: currentMode,
+        voiceMode: voiceMode
       })
     });
 
-    const data = await response.json();
-    const raw = (data.choices?.[0]?.message?.content || data.content?.[0]?.text || '{}').replace(/```json|```/g, '').trim();
-    const result = JSON.parse(raw);
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}`);
+    }
 
-    document.getElementById('output-text').innerHTML = result.corrected || text;
+    const result = await response.json();
 
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    // Render corrected text
+    document.getElementById('output-text').innerHTML =
+      result.corrected || escapeHtml(text);
+
+    // Stats chips
     const chips = [];
-    if (result.errors > 0) chips.push(`<span class="stat stat-err">${result.errors} error${result.errors !== 1 ? 's' : ''}</span>`);
-    if (result.warnings > 0) chips.push(`<span class="stat stat-warn">${result.warnings} warning${result.warnings !== 1 ? 's' : ''}</span>`);
+    if ((result.errors || 0) > 0)
+      chips.push(`<span class="stat stat-err">${result.errors} error${result.errors !== 1 ? 's' : ''} fixed</span>`);
+    if ((result.warnings || 0) > 0)
+      chips.push(`<span class="stat stat-warn">${result.warnings} style issue${result.warnings !== 1 ? 's' : ''}</span>`);
     chips.push(`<span class="stat stat-good">${result.improvements || 0} improvement${(result.improvements || 0) !== 1 ? 's' : ''}</span>`);
     document.getElementById('stats-row').innerHTML = chips.join('');
     document.getElementById('output-section').style.display = 'block';
 
-  } catch (e) {
+    // Smooth scroll to result on mobile
+    if (window.innerWidth < 768) {
+      document.getElementById('output-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+  } catch (err) {
+    console.error('Grammar check error:', err);
     document.getElementById('output-text').innerHTML =
-      `<span style="color:var(--ink-muted)">Processing error — please try again.</span><br><br>${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}`;
+      `<span style="color:var(--ink-muted)">
+        Something went wrong — please try again in a moment.<br>
+        <small style="font-size:0.78rem;opacity:0.6">${err.message}</small>
+      </span>`;
     document.getElementById('stats-row').innerHTML = '';
     document.getElementById('output-section').style.display = 'block';
   }
@@ -113,16 +125,13 @@ function copyOutput() {
     const btn = document.querySelector('.btn-copy');
     const orig = btn.textContent;
     btn.textContent = '✓ Copied!';
-    btn.style.background = 'var(--accent)';
-    btn.style.color = 'white';
-    btn.style.borderColor = 'var(--accent)';
+    btn.style.cssText = 'background:var(--accent);color:white;border-color:var(--accent)';
     setTimeout(() => {
       btn.textContent = orig;
-      btn.style.background = '';
-      btn.style.color = '';
-      btn.style.borderColor = '';
+      btn.style.cssText = '';
     }, 2200);
   }).catch(() => {
+    // Fallback for older browsers
     const sel = window.getSelection();
     const range = document.createRange();
     range.selectNodeContents(document.getElementById('output-text'));
@@ -131,17 +140,18 @@ function copyOutput() {
   });
 }
 
-// ── Recheck ──
+// ── Recheck (put corrected text back into input) ──
 function recheck() {
   const corrected = document.getElementById('output-text').innerText;
   document.getElementById('input-area').value = corrected;
   document.getElementById('output-section').style.display = 'none';
   document.getElementById('input-area').focus();
   const words = corrected.trim().split(/\s+/).filter(Boolean).length;
-  document.getElementById('word-count').textContent = words + ' word' + (words !== 1 ? 's' : '');
+  document.getElementById('word-count').textContent =
+    words + ' word' + (words !== 1 ? 's' : '');
 }
 
-// ── FAQ toggle ──
+// ── FAQ accordion ──
 function toggleFaq(el) {
   const item = el.closest('.faq-item');
   const wasOpen = item.classList.contains('open');
@@ -154,14 +164,32 @@ function toggleNav() {
   document.getElementById('nav').classList.toggle('nav-mobile-open');
 }
 
-// ── Keyboard accessibility for toggle ──
+// ── Keyboard: voice toggle ──
 document.getElementById('voice-toggle')?.addEventListener('keydown', e => {
   if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleVoice(); }
 });
 
-// ── Scroll: nav shadow ──
+// ── Keyboard: Enter in textarea submits ──
+document.getElementById('input-area')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    runCheck();
+  }
+});
+
+// ── Nav shadow on scroll ──
 window.addEventListener('scroll', () => {
   const nav = document.getElementById('nav');
   if (!nav) return;
-  nav.style.boxShadow = window.scrollY > 10 ? '0 2px 20px rgba(13,13,13,0.1)' : 'none';
+  nav.style.boxShadow = window.scrollY > 10
+    ? '0 2px 20px rgba(13,13,13,0.1)'
+    : 'none';
 }, { passive: true });
+
+// ── Helper: escape HTML for error display ──
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
