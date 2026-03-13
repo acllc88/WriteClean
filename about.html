@@ -51,6 +51,13 @@
 .about-cta a { background: var(--accent); color: white; padding: 14px 34px; border-radius: 50px; font-weight: 600; font-size: 1rem; text-decoration: none; transition: all 0.2s; display: inline-block; }
 .about-cta a:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,107,60,0.3); }
 </style>
+<script>
+(function(){
+  var saved=localStorage.getItem('wc-theme');
+  var prefersDark=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  document.documentElement.setAttribute('data-theme',saved||(prefersDark?'dark':'light'));
+})();
+</script>
 </head>
 <body>
 <nav id="nav">
@@ -65,6 +72,10 @@
     <li><a href="about.html" aria-current="page">About</a></li>
   </ul>
   <button class="btn-nav-cta" onclick="location.href='index.html#tool'">Check Grammar Free</button>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light mode">
+    <span class="icon-moon">🌙</span>
+    <span class="icon-sun">☀️</span>
+  </button>
   <button class="nav-burger" id="burger" onclick="document.getElementById('nav').classList.toggle('nav-mobile-open')"><span></span><span></span><span></span></button>
 </nav>
 
@@ -160,5 +171,8 @@
   <div class="footer-bottom"><p>© 2026 WriteClean · writeclean.ai</p></div>
 </footer>
 <script src="js/cookies.js"></script>
+<script>
+function toggleTheme(){var c=document.documentElement.getAttribute('data-theme')||'light';var n=c==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('wc-theme',n);}
+</script>
 </body>
 </html>

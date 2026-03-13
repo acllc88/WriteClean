@@ -17,6 +17,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<script>
+(function(){
+  var saved=localStorage.getItem('wc-theme');
+  var prefersDark=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  document.documentElement.setAttribute('data-theme',saved||(prefersDark?'dark':'light'));
+})();
+</script>
 </head>
 <body>
 <nav id="nav">
@@ -30,6 +37,10 @@
     <li><a href="index.html#faq">FAQ</a></li>
   </ul>
   <button class="btn-nav-cta" onclick="location.href='index.html#tool'">Check Grammar Free</button>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light mode">
+    <span class="icon-moon">🌙</span>
+    <span class="icon-sun">☀️</span>
+  </button>
   <button class="nav-burger" id="burger" onclick="document.getElementById('nav').classList.toggle('nav-mobile-open')"><span></span><span></span><span></span></button>
 </nav>
 <main>
@@ -89,5 +100,8 @@
   </div>
   <div class="footer-bottom"><p>© 2026 WriteClean · writeclean.ai</p></div>
 </footer>
+<script>
+function toggleTheme(){var c=document.documentElement.getAttribute('data-theme')||'light';var n=c==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('wc-theme',n);}
+</script>
 </body>
 </html>
