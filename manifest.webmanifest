@@ -1,0 +1,30 @@
+{
+  "name": "WriteClean — Free Grammar Checker",
+  "short_name": "WriteClean",
+  "description": "Free AI grammar checker. No account. No billing. No word limits.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf8f4",
+  "theme_color": "#1a6b3c",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%231a6b3c'/%3E%3Ctext x='96' y='128' font-family='Georgia,serif' font-size='100' font-weight='700' fill='white' text-anchor='middle' font-style='italic'%3EW%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Check Grammar",
+      "url": "/#tool",
+      "description": "Open grammar checker directly"
+    },
+    {
+      "name": "Humanize AI Text",
+      "url": "/#tool",
+      "description": "Humanize AI-generated text"
+    }
+  ]
+}

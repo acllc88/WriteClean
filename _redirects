@@ -1,0 +1,17 @@
+# Netlify redirects
+# Clean URLs (optional — remove .html from URLs)
+/blog/free-grammar-checker-no-signup  /blog/free-grammar-checker-no-signup.html  200
+/blog/grammarly-alternative           /blog/grammarly-alternative.html           200
+/blog/students-grammar                /blog/students-grammar.html                200
+/blog/email-grammar                   /blog/email-grammar.html                   200
+/blog/humanize-ai-text                /blog/humanize-ai-text.html                200
+/blog/grammar-seo                     /blog/grammar-seo.html                     200
+/blog/esl-grammar                     /blog/esl-grammar.html                     200
+/blog/freelance-proposals             /blog/freelance-proposals.html             200
+/blog/academic-grammar                /blog/academic-grammar.html                200
+/blog/business-writing                /blog/business-writing.html                200
+/privacy                              /privacy.html                              200
+/blog                                 /blog.html                                 200
+
+# 404 fallback
+/*  /404.html  404
