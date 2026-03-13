@@ -285,3 +285,10 @@ footer { background: #080807; padding: 56px 5% 28px; }
   .alert-bar, #nav, .trust-strip, footer, .btn-check, .blog-preview-section { display: none; }
   .tool-card { box-shadow: none; }
 }
+
+/* ── Performance: prevent layout shifts ── */
+.hero{min-height:320px}
+.tool-section{min-height:400px}
+/* Ensure images/SVGs don't cause CLS */
+img,svg{display:block}
+/* font-display handled via Google Fonts ?display=swap param */
