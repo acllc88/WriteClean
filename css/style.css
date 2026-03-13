@@ -23,7 +23,7 @@
 :root {
   --ink: #0d0d0d;
   --ink-light: #4a4a4a;
-  --ink-muted: #888;
+  --ink-muted: #595959;
   --cream: #faf8f4;
   --cream-dark: #f0ede6;
   --cream-mid: #f5f2ec;
@@ -61,7 +61,7 @@
   :root {
     --ink: #f0ede6;
     --ink-light: #b0ad a5;
-    --ink-muted: #66 6360;
+    --ink-muted: #9ca3af;
     --cream: #111110;
     --cream-dark: #1c1b18;
     --cream-mid: #171613;
@@ -147,7 +147,7 @@ button { font-family: var(--font-body); }
 .toggle-knob { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: white; transition: left 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
 .toggle.on .toggle-knob { left: 19px; }
 .mode-on { color: var(--accent); font-weight: 700; font-size: 0.75rem; }
-.mode-off { color: var(--ink-muted); font-weight: 700; font-size: 0.75rem; }
+.mode-off { color: #595959; font-weight: 700; font-size: 0.75rem; }
 .btn-check { background: var(--accent); color: white; border: none; padding: 12px 30px; border-radius: 50px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 0.01em; }
 .btn-check:hover:not(:disabled) { filter: brightness(1.1); translate: 0 -1px; box-shadow: 0 4px 16px rgba(26,107,60,0.3); }
 .btn-check:disabled { background: var(--ink-muted); cursor: not-allowed; transform: none; }
@@ -171,7 +171,7 @@ button { font-family: var(--font-body); }
 .btn-copy, .btn-recheck { border-radius: 50px; font-size: 0.85rem; font-weight: 500; cursor: pointer; padding: 8px 20px; transition: all 0.2s; }
 .btn-copy { background: transparent; border: 1.5px solid var(--border-strong); color: var(--ink); }
 .btn-copy:hover { background: var(--accent); color: white; border-color: var(--accent); }
-.btn-recheck { background: transparent; border: 1.5px solid var(--border); color: var(--ink-muted); }
+.btn-recheck { background: transparent; border: 1.5px solid var(--border); color: #595959; }
 .btn-recheck:hover { background: var(--cream-dark); }
 
 /* ── Trust Strip ── */
@@ -185,7 +185,7 @@ button { font-family: var(--font-body); }
 
 /* ── Sections ── */
 .section-inner { max-width: var(--max-w); margin: 0 auto; }
-.section-label { display: block; font-size: 0.72rem; font-weight: 700; color: #155a30; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+.section-label { display: block; font-size: 0.72rem; font-weight: 700; color: #0f4424; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
 .section-inner h2 { font-family: var(--font-display); font-size: clamp(1.7rem, 3.5vw, 2.5rem); line-height: 1.18; margin-bottom: 14px; }
 .lead { font-size: 1rem; color: var(--ink-light); line-height: 1.72; margin-bottom: 36px; font-weight: 300; }
 
@@ -231,7 +231,7 @@ button { font-family: var(--font-body); }
 .blog-card-img { height: 120px; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
 .bc1{background:linear-gradient(135deg,#e8f5ee,#c6e6d3)} .bc2{background:linear-gradient(135deg,#fdf0ef,#ffc9c5)} .bc3{background:linear-gradient(135deg,#fef3c7,#fde68a)} .bc4{background:linear-gradient(135deg,#eff6ff,#dbeafe)} .bc5{background:linear-gradient(135deg,#f5f3ff,#ede9fe)} .bc6{background:linear-gradient(135deg,#f0fdf4,#dcfce7)} .bc7{background:linear-gradient(135deg,#fff7ed,#fed7aa)} .bc8{background:linear-gradient(135deg,#f0f9ff,#bae6fd)} .bc9{background:linear-gradient(135deg,#fdf4ff,#f5d0fe)} .bc10{background:linear-gradient(135deg,#fefce8,#fef08a)}
 .blog-card-body { padding: 18px; }
-.blog-tag { font-size: 0.68rem; font-weight: 700; color: #155a30; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+.blog-tag { font-size: 0.68rem; font-weight: 700; color: #0f4424; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
 .blog-title { font-size: 0.9rem; font-weight: 600; line-height: 1.42; margin-bottom: 8px; }
 .blog-meta { font-size: 0.72rem; color: #555; }
 
@@ -250,7 +250,7 @@ footer { background: #080807; padding: 56px 5% 28px; }
 /* ── Blog Page ── */
 .blog-page { padding: 60px 5%; max-width: 800px; margin: 0 auto; }
 .blog-page h1 { font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.8rem); line-height: 1.18; margin-bottom: 18px; }
-.post-meta-line { display: flex; align-items: center; gap: 16px; font-size: 0.82rem; color: #555; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.post-meta-line { display: flex; align-items: center; gap: 16px; font-size: 0.82rem; color: #444; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .post-tag { background: var(--accent-light); color: var(--accent); padding: 3px 10px; border-radius: 50px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
 .blog-page h2 { font-family: var(--font-display); font-size: 1.55rem; margin: 40px 0 14px; }
 .blog-page h3 { font-size: 1.05rem; font-weight: 600; margin: 28px 0 10px; }
@@ -275,7 +275,7 @@ footer { background: #080807; padding: 56px 5% 28px; }
 /* ── Privacy Page ── */
 .legal-page { max-width: 720px; margin: 0 auto; padding: 60px 5% 100px; }
 .legal-page h1 { font-family: var(--font-display); font-size: 2rem; margin-bottom: 8px; }
-.legal-page .updated { font-size: 0.82rem; color: #555; margin-bottom: 36px; }
+.legal-page .updated { font-size: 0.82rem; color: #444; margin-bottom: 36px; }
 .legal-page h2 { font-size: 1.1rem; font-weight: 600; margin: 28px 0 10px; }
 .legal-page p, .legal-page li { font-size: 0.95rem; color: var(--ink-light); line-height: 1.78; margin-bottom: 14px; }
 .legal-page ul { padding-left: 20px; }

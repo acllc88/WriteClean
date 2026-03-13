@@ -58,7 +58,7 @@
     }
     #wc-cookie-banner .wc-title span { font-size: 1rem; }
     #wc-cookie-banner .wc-desc {
-      font-size: 0.78rem; color: rgba(240,237,230,0.45);
+      font-size: 0.78rem; color: rgba(240,237,230,0.82);
       line-height: 1.55; max-width: 560px;
     }
     #wc-cookie-banner .wc-desc a {
@@ -78,12 +78,12 @@
     }
     #wc-cookie-banner .wc-btn-accept:hover { filter: brightness(1.15); transform: translateY(-1px); }
     #wc-cookie-banner .wc-btn-necessary {
-      background: transparent; color: rgba(240,237,230,0.5);
+      background: transparent; color: rgba(240,237,230,0.85);
       border: 1px solid rgba(240,237,230,0.15) !important;
     }
     #wc-cookie-banner .wc-btn-necessary:hover { color: #f0ede6; border-color: rgba(240,237,230,0.35) !important; }
     #wc-cookie-banner .wc-btn-settings {
-      background: transparent; color: rgba(240,237,230,0.3);
+      background: transparent; color: rgba(240,237,230,0.75);
       font-size: 0.75rem; padding: 6px 12px;
     }
     #wc-cookie-banner .wc-btn-settings:hover { color: rgba(240,237,230,0.6); }
@@ -110,7 +110,7 @@
       font-size: 1.1rem; color: #f0ede6; margin-bottom: 6px; font-weight: 700;
     }
     #wc-cookie-modal .wc-modal-sub {
-      font-size: 0.8rem; color: rgba(240,237,230,0.4); margin-bottom: 24px; line-height: 1.5;
+      font-size: 0.8rem; color: rgba(240,237,230,0.80); margin-bottom: 24px; line-height: 1.5;
     }
     #wc-cookie-modal .wc-cookie-row {
       display: flex; justify-content: space-between; align-items: flex-start;
@@ -118,10 +118,10 @@
     }
     #wc-cookie-modal .wc-cookie-row-info { flex: 1; }
     #wc-cookie-modal .wc-cookie-row-name {
-      font-size: 0.88rem; color: #f0ede6; font-weight: 600; margin-bottom: 4px;
+      font-size: 0.88rem; color: #ffffff; font-weight: 600; margin-bottom: 4px;
     }
     #wc-cookie-modal .wc-cookie-row-desc {
-      font-size: 0.75rem; color: rgba(240,237,230,0.4); line-height: 1.5;
+      font-size: 0.75rem; color: rgba(240,237,230,0.80); line-height: 1.5;
     }
     #wc-cookie-modal .wc-toggle-wrap { flex-shrink: 0; padding-top: 2px; }
     #wc-cookie-modal .wc-mini-toggle {
@@ -160,7 +160,7 @@
       border-radius: 50px; padding: 7px 14px 7px 10px;
       display: none; align-items: center; gap: 7px;
       cursor: pointer; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-      font-size: 0.72rem; font-weight: 600; color: rgba(240,237,230,0.4);
+      font-size: 0.72rem; font-weight: 600; color: rgba(240,237,230,0.75);
       transition: all 0.2s; box-shadow: 0 2px 12px rgba(0,0,0,0.4);
     }
     #wc-cookie-float:hover { color: #f0ede6; border-color: rgba(255,255,255,0.25); }
