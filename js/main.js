@@ -74,13 +74,20 @@ async function runCheck() {
     });
 
     if (!response.ok) {
-      throw new Error(`Server returned ${response.status}`);
+      // Try to get the real error message from the server
+      let errMsg = `Server error (${response.status})`;
+      try {
+        const errData = await response.json();
+        errMsg = errData.error || errData.detail || errMsg;
+        if (errData.fix) errMsg += ' — ' + errData.fix;
+      } catch(e) {}
+      throw new Error(errMsg);
     }
 
     const result = await response.json();
 
     if (result.error) {
-      throw new Error(result.error);
+      throw new Error(result.error + (result.fix ? ' — ' + result.fix : ''));
     }
 
     // Render corrected text

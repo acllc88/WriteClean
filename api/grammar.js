@@ -1,85 +1,96 @@
 // api/grammar.js
-// Vercel Serverless Function — secure proxy for OpenRouter API
-// API key stays on server, never exposed to browser
+// Vercel Serverless Function — CommonJS format (required for .js files)
+// API key lives in Vercel Environment Variables → never in browser
 
-export default async function handler(req, res) {
+const SYSTEM_PROMPTS = {
+  grammar: (voiceMode) => voiceMode
+    ? `You are an expert grammar checker. PRESERVE the writer's unique voice — only fix actual grammar, spelling, and punctuation errors. Do NOT rewrite sentences or change word choices unless outright wrong. Return ONLY a raw JSON object (no markdown, no backticks, no explanation): {"corrected":"the corrected text with errors wrapped like this: <span class=\\"err\\">wrong word</span><span class=\\"fix\\">correct word</span> and all other text kept exactly as-is","errors":2,"warnings":1,"improvements":3}`
+    : `You are an expert grammar checker. Fix all grammar, spelling, punctuation, and style errors. Return ONLY a raw JSON object (no markdown, no backticks): {"corrected":"the corrected text with errors wrapped like this: <span class=\\"err\\">wrong word</span><span class=\\"fix\\">correct word</span>","errors":2,"warnings":1,"improvements":3}`,
+
+  style: () =>
+    `You are a style and clarity editor. Improve readability, flow, and conciseness while keeping the writer's voice. Return ONLY a raw JSON object (no markdown, no backticks): {"corrected":"improved text with changes wrapped in <span class=\\"fix\\">improved phrase</span>","errors":0,"warnings":2,"improvements":4}`,
+
+  humanize: () =>
+    `You are an expert at making AI-generated text sound naturally human. Vary sentence lengths dramatically, add personality and first-person perspective, remove corporate jargon, use informal transitions. Return ONLY a raw JSON object (no markdown, no backticks): {"corrected":"humanized text with key changes in <span class=\\"fix\\">natural phrase</span>","errors":0,"warnings":0,"improvements":5}`
+};
+
+module.exports = async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Verify API key is configured
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    console.error('MISSING: OPENROUTER_API_KEY environment variable not set in Vercel');
+    return res.status(500).json({
+      error: 'API key not configured',
+      fix: 'Go to Vercel Dashboard → Settings → Environment Variables → add OPENROUTER_API_KEY'
+    });
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  const { text, mode = 'grammar', voiceMode = true } = req.body || {};
 
-  const { text, mode, voiceMode } = req.body;
-
-  if (!text || text.trim().length === 0) {
+  if (!text || !text.trim()) {
     return res.status(400).json({ error: 'No text provided' });
   }
 
   const safeText = text.slice(0, 10000);
-
-  const systemPrompts = {
-    grammar: `You are an expert grammar checker. ${voiceMode
-      ? "PRESERVE the writer's unique voice and style — only fix actual grammatical, spelling, and punctuation errors. Do NOT change word choices unless they are outright wrong."
-      : "Fix all grammar, spelling, punctuation, and style errors comprehensively."
-    } Return ONLY valid JSON with no markdown fences: {"corrected":"<corrected text as HTML — wrap removed errors in <span class=\\"err\\">wrong text</span> immediately followed by <span class=\\"fix\\">correction</span>. Keep all other text as plain text.>","errors":<integer count of grammar/spelling errors fixed>,"warnings":<integer count of style issues>,"improvements":<integer total changes made>}`,
-
-    style: `You are a style and clarity editor. Improve clarity, flow, and conciseness while keeping the writer's unique voice intact. Return ONLY valid JSON with no markdown fences: {"corrected":"<improved text as HTML — wrap style improvements in <span class=\\"fix\\">improved text</span>. Keep unchanged text as plain text.>","errors":0,"warnings":<integer style issues found>,"improvements":<integer total improvements made>}`,
-
-    humanize: `You are an expert at making AI-generated text sound genuinely human. Transform the text by: varying sentence lengths dramatically (mix very short punchy sentences with longer flowing ones), adding first-person perspective and opinions, using informal transitions like 'But here's the thing' or 'So why does this matter?', removing corporate jargon, adding specific details and personality. Return ONLY valid JSON with no markdown fences: {"corrected":"<humanized text as HTML — wrap key humanized phrases in <span class=\\"fix\\">humanized text</span>. Keep other text as plain text.>","errors":0,"warnings":0,"improvements":<integer count of humanization changes>}`
-  };
-
-  const systemPrompt = systemPrompts[mode] || systemPrompts.grammar;
+  const systemPrompt = (SYSTEM_PROMPTS[mode] || SYSTEM_PROMPTS.grammar)(voiceMode);
 
   try {
+    console.log(`[grammar] mode=${mode} voiceMode=${voiceMode} length=${safeText.length}`);
+
     const apiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'HTTP-Referer': 'https://writeclean.vercel.app',
         'X-Title': 'WriteClean Grammar Checker'
       },
       body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4-5',
+        model: 'openai/gpt-4o-mini',
         max_tokens: 2000,
+        temperature: 0.2,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Process this text:\n\n${safeText}` }
+          { role: 'user', content: safeText }
         ]
       })
     });
 
     if (!apiResponse.ok) {
-      const errText = await apiResponse.text();
-      console.error('OpenRouter error:', apiResponse.status, errText);
-      return res.status(502).json({ error: 'AI service error', status: apiResponse.status });
+      const errBody = await apiResponse.text();
+      console.error(`OpenRouter error ${apiResponse.status}:`, errBody);
+      return res.status(502).json({
+        error: `AI service error (${apiResponse.status})`,
+        detail: errBody
+      });
     }
 
     const data = await apiResponse.json();
-    const raw = (data.choices?.[0]?.message?.content || '{}')
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim();
+
+    let raw = data.choices?.[0]?.message?.content || '';
+    // Strip any markdown fences the model may have added
+    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```\s*$/i, '').trim();
 
     let result;
     try {
       result = JSON.parse(raw);
     } catch (e) {
+      console.warn('JSON parse failed, using raw text as corrected output');
       result = { corrected: raw || safeText, errors: 0, warnings: 0, improvements: 0 };
     }
 
     return res.status(200).json(result);
 
   } catch (err) {
-    console.error('API route error:', err);
+    console.error('Handler error:', err.message);
     return res.status(500).json({ error: 'Server error: ' + err.message });
   }
-}
+};
